@@ -1,0 +1,26 @@
+name: Secure DevSecOps Pipeline
+
+on:
+  push:
+    branches:
+      - master
+      - main
+  workflow_dispatch:
+
+jobs:
+  build_and_package:
+    name: BUILD-JOB
+    runs-on: ubuntu-slim
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Install Dependencies
+        run: npm install
+
+      - name: Test
+        run: echo "code is tested!"
+
+      - name: Deploy
+        run: echo "my code is deployed"
