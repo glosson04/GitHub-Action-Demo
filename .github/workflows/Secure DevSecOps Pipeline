@@ -2,25 +2,37 @@ name: Secure DevSecOps Pipeline
 
 on:
   push:
-    branches:
-      - master
-      - main
+    branches: [main, master]
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
-  build_and_package:
+  build:
     name: BUILD-JOB
     runs-on: ubuntu-slim
-
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4 # NODE.JS: install Node 22
+        with:
+          node-version: 22
+      - run: npm ci # install exact dependencies from package-lock.json
+      - run: npm test
+      - run: npm run build # creates dist/
+      - uses: actions/upload-artifact@v4 # ARTIFACT: save dist/ from this run
+        with:
+          name: app-build
+          path: dist/
 
-      - name: Install Dependencies
-        run: npm install
-
-      - name: Test
-        run: echo "code is tested!"
-
-      - name: Deploy
-        run: echo "my code is deployed"
+  codeql: # separate job → runs at the SAME TIME as build
+    runs-on: ubuntu-slim
+    permissions:
+      contents: read
+      security-events: write # allows uploading results to the Security tab
+    steps:
+      - uses: actions/checkout@v4
+      - uses: github/codeql-action/init@v4 # CODEQL: start the scan
+        with:
+          languages: javascript-typescript
+      - uses: github/codeql-action/analyze@v4 # CODEQL: analyse and upload results
